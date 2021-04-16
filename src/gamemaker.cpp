@@ -1,5 +1,9 @@
 #include "player.hpp"
+#ifdef _WIN32
+#include "lodepng.h"
+#else
 #include "libpng-util.h"
+#endif
 #include "yuv_rgb.h"
 
 #include <string>
