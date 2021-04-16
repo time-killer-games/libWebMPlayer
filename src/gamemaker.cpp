@@ -1,8 +1,8 @@
 #include "player.hpp"
 #ifdef _WIN32
-#include "lodepng.h"
-#else
 #include "libpng-util.h"
+#else
+#include "lodepng.h"
 #endif
 #include "yuv_rgb.h"
 
@@ -125,18 +125,18 @@ EXPORTED_FUNCTION double video_update(double ind, double time, char *fname) {
   yuv = videos[(int)ind]->lockRead();
   if (yuv) {
     unsigned char *rgb = (unsigned char *)malloc(3 * yuv->displayWidth() * yuv->displayHeight());
-	yuv420_rgb24_std(yuv->displayWidth(), yuv->displayHeight(), yuv->y(), yuv->u(), yuv->v(), 
-	yuv->displayWidth(), (yuv->displayWidth() - 1) / 2, rgb, yuv->displayWidth() * 3, YCBCR_JPEG);
+    yuv420_rgb24_std(yuv->displayWidth(), yuv->displayHeight(), yuv->y(), yuv->u(), yuv->v(), 
+    yuv->displayWidth(), (yuv->displayWidth() - 1) / 2, rgb, yuv->displayWidth() * 3, YCBCR_JPEG);
     if (rgb) {
       unsigned char *rgba = nullptr; convert_rgb_to_rgba(rgb, yuv->displayWidth(), yuv->displayHeight(), &rgba);
       if (rgba) {
         #if defined(_WIN32)
         std::wstring wstr = widen(fname);
-	    libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), wstr.c_str());
+        libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), wstr.c_str());
         #else
         lodepng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), fname);
         #endif
-	    free(rgba);
+        free(rgba);
       }
       videos[(int)ind]->unlockRead();
       free(rgb);
