@@ -135,7 +135,7 @@ EXPORTED_FUNCTION double video_grab_frame(double ind, char *fname) {
         std::wstring wstr = widen(fname);
         libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), wstr.c_str());
         #else
-        lodepng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), fname.c_str());
+        lodepng_encode32_file(fname, rgba, yuv->displayWidth(), yuv->displayHeight());
         #endif
         free(rgba);
       }
