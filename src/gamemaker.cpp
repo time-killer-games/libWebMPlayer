@@ -119,8 +119,8 @@ EXPORTED_FUNCTION double video_stop(double ind) {
   return video_is_stopped(ind);
 }
 
-EXPORTED_FUNCTION double video_update(double ind, double time, char *fname) {
-  videos[(int)ind]->update(time);
+EXPORTED_FUNCTION double video_grab_frame(double ind, char *fname) {
+  videos[(int)ind]->update(0);
   uvpx::Frame *yuv = nullptr;
   yuv = videos[(int)ind]->lockRead();
   if (yuv) {
@@ -128,7 +128,8 @@ EXPORTED_FUNCTION double video_update(double ind, double time, char *fname) {
     yuv420_rgb24_std(yuv->displayWidth(), yuv->displayHeight(), yuv->y(), yuv->u(), yuv->v(), 
     yuv->displayWidth(), (yuv->displayWidth() - 1) / 2, rgb, yuv->displayWidth() * 3, YCBCR_JPEG);
     if (rgb) {
-      unsigned char *rgba = nullptr; convert_rgb_to_rgba(rgb, yuv->displayWidth(), yuv->displayHeight(), &rgba);
+      unsigned char *rgba = nullptr; 
+      convert_rgb_to_rgba(rgb, yuv->displayWidth(), yuv->displayHeight(), &rgba);
       if (rgba) {
         #if defined(_WIN32)
         std::wstring wstr = widen(fname);
