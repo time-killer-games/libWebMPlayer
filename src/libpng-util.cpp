@@ -24,6 +24,7 @@
 
 */
 
+#ifdef _WIN32
 #include <cwchar>
 #include <cerrno>
 
@@ -127,3 +128,4 @@ unsigned libpng_decode32_file(unsigned char** out, unsigned* w, unsigned* h, con
 
   return 0;
 }
+#endif
