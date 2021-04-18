@@ -1,6 +1,7 @@
 #include "player.hpp"
 #ifdef _WIN32
 #include "libpng-util.h"
+#include "widen_narrow.h"
 #else
 #include "lodepng.h"
 #endif
@@ -23,29 +24,6 @@ static std::unordered_map<int, uvpx::Player *> videos;
 static std::unordered_map<int, float> videos_time;
 static float gamespeed = 60.0f;
 static float gametimer = 0.0f;
-
-#if defined(_WIN32)
-static std::wstring widen(std::string str) {
-  std::size_t wchar_count = str.size() + 1;
-  std::vector<wchar_t> buf(wchar_count);
-  return std::wstring { buf.data(), 
-    (std::size_t)MultiByteToWideChar(
-    CP_UTF8, 0, str.c_str(), -1, 
-    buf.data(), (int)wchar_count) };
-}
-
-static std::string narrow(std::wstring wstr) {
-  int nbytes = WideCharToMultiByte(CP_UTF8,
-    0, wstr.c_str(), (int)wstr.length(), 
-    nullptr, 0, nullptr, nullptr);
-  std::vector<char> buf(nbytes);
-  return std::string { buf.data(), 
-    (std::size_t)WideCharToMultiByte(
-    CP_UTF8, 0, wstr.c_str(), 
-    (int)wstr.length(), buf.data(), 
-    nbytes, nullptr, nullptr) };
-}
-#endif
 
 static void convert_rgb_to_rgba(const uint8_t *RGB, uint32_t width, uint32_t height, uint8_t **RGBA, uint32_t dispWidth, uint32_t dispHeight) {
   if ((*RGBA) == nullptr) {

@@ -1,6 +1,11 @@
 #include "file_reader.hpp"
 #include "utils.hpp"
 
+#ifdef _WIN32
+#include "widen_narrow.h"
+#include <clocale>
+#endif
+
 #include <algorithm>
 #include <cstring>
 
@@ -27,8 +32,10 @@ namespace uvpx
         if (m_file)
             return -1;
 
-#ifdef _MSC_VER
-        const errno_t e = fopen_s(&m_file, fileName, "rb");
+#ifdef _WIN32
+        setlocale(LC_ALL, "");
+        std::wstring wstrFileName = widen(fileName);
+        const errno_t e = _wfopen_s(&m_file, wstrFileName.c_str(), L"rb");
 
         if (e)
             return -1;  // error
@@ -82,7 +89,7 @@ namespace uvpx
 
         if (!m_preloaded)
         {
-#ifdef _MSC_VER
+#ifdef _WIN32
             const int status = _fseeki64(m_file, offset, SEEK_SET);
 
             if (status)
@@ -131,7 +138,7 @@ namespace uvpx
     {
         if (m_file == NULL)
             return false;
-#ifdef _MSC_VER
+#ifdef _WIN32
         int status = _fseeki64(m_file, 0L, SEEK_END);
 
         if (status)
@@ -146,7 +153,7 @@ namespace uvpx
         if (m_length < 0)
             return false;
 
-#ifdef _MSC_VER
+#ifdef _WIN32
         status = _fseeki64(m_file, 0L, SEEK_SET);
 
         if (status)
