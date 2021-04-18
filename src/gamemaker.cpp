@@ -65,6 +65,7 @@ EXPORTED_FUNCTION double video_delete(double ind) {
   if (video_exists(ind)) {
     delete videos[ind];
     videos[ind] = nullptr;
+    videos.erase(ind);
     return true;
   }
   return false;
