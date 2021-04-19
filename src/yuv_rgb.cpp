@@ -3,7 +3,9 @@
 
 #include "yuv_rgb.h"
 
+#ifndef BUILD_ES
 #include <x86intrin.h>
+#endif
 
 #include <stdio.h>
 
