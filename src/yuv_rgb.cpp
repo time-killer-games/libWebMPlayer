@@ -3,8 +3,6 @@
 
 #include "yuv_rgb.h"
 
-#include <x86intrin.h>
-
 #include <stdio.h>
 
 
