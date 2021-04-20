@@ -1,3 +1,7 @@
+#include <string>
+#include <vector>
+#include <unordered_map>
+
 #include "player.hpp"
 #ifdef _WIN32
 #include "libpng-util.h"
@@ -7,12 +11,8 @@
 #endif
 #include "yuv_rgb.h"
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-
-#include <png.h>
 #ifdef _WIN32
+#include <png.h>
 #include <windows.h>
 #define EXPORTED_FUNCTION extern "C" __declspec(dllexport)
 #else /* macOS, Linux, and BSD */
