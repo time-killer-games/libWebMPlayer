@@ -1,2 +1,2 @@
-# libGMWebMPlayer
+# libWebMPlayer
 WebM Video Playback Library
