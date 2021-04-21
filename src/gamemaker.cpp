@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "player.hpp"
+#include "webm_player.hpp"
 #ifdef _WIN32
 #include "libpng-util.h"
 #include "widen_narrow.h"
@@ -21,6 +22,7 @@
 
 static int id = -1;
 static std::unordered_map<int, uvpx::Player *> videos;
+static std::unordered_map<int, wp::WebmPlayer *> audios;
 
 static void convert_rgb_to_rgba(const uint8_t *RGB, uint32_t width, uint32_t height, uint8_t **RGBA, uint32_t dispWidth, uint32_t dispHeight) {
   if ((*RGBA) == nullptr) {
@@ -45,9 +47,11 @@ EXPORTED_FUNCTION double video_exists(double ind) {
 }
 
 EXPORTED_FUNCTION double video_add(char *fname) {
-  uvpx::Player *player = new uvpx::Player(uvpx::Player::defaultConfig());
-  uvpx::Player::LoadResult res = player->load(fname, 1, true);
-  id++; videos.insert(std::make_pair(id, player));
+  uvpx::Player *video = new uvpx::Player(uvpx::Player::defaultConfig());
+  uvpx::Player::LoadResult res = video->load(fname, 1, true);
+  wp::WebmPlayer *audio = new wp::WebmPlayer; audio->load(fname);
+  id++; videos.insert(std::make_pair(id, video));
+  audios.insert(std::make_pair(id, audio));
   switch (res) {
    case uvpx::Player::LoadResult::FileNotExists:
     printf("Failed to open video file '%s'\n", fname);
@@ -56,16 +60,19 @@ EXPORTED_FUNCTION double video_add(char *fname) {
    case uvpx::Player::LoadResult::NotInitialized:
     printf("Video player not initialized\n");
    case uvpx::Player::LoadResult::Success:
-    printf("Video loaded successfully\n");    
+    printf("Video loaded successfully\n");
   }
   return id;
 }
 
 EXPORTED_FUNCTION double video_delete(double ind) {
   if (video_exists(ind)) {
-    delete videos[ind];
-    videos[ind] = nullptr;
+    delete videos[(int)ind];
+    delete audios[(int)ind];
+    videos[(int)ind] = nullptr;
+    audios[(int)ind] = nullptr;
     videos.erase(ind);
+    audios.erase(ind);
     return true;
   }
   return false;
@@ -81,6 +88,7 @@ EXPORTED_FUNCTION double video_is_playing(double ind) {
 EXPORTED_FUNCTION double video_play(double ind) {
   if (video_exists(ind)) {
     videos[(int)ind]->play();
+    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Play);
   }
   return video_is_playing(ind);
 }
@@ -95,6 +103,7 @@ EXPORTED_FUNCTION double video_is_paused(double ind) {
 EXPORTED_FUNCTION double video_pause(double ind) {
   if (video_exists(ind)) {
     videos[(int)ind]->pause();
+    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Pause);
   }
   return video_is_paused(ind);
 }
@@ -109,6 +118,7 @@ EXPORTED_FUNCTION double video_is_stopped(double ind) {
 EXPORTED_FUNCTION double video_stop(double ind) {
   if (video_exists(ind)) {
     videos[(int)ind]->stop();
+    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Stop);
   }
   return video_is_stopped(ind);
 }
@@ -128,7 +138,7 @@ EXPORTED_FUNCTION double video_get_property(double ind, double propertyId) {
       switch ((int)propertyId) {
         case WEBM_WIDTH:    ret = yuv->displayWidth();          break;
         case WEBM_HEIGHT:   ret = yuv->displayHeight();         break;
-        case WEBM_DURATION: ret = videos[ind]->info().duration; break;
+        case WEBM_DURATION: ret = videos[(int)ind]->info().duration; break;
         default:            ret = -1.0;                         break;
       }
       videos[(int)ind]->unlockRead();
