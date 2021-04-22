@@ -30,9 +30,9 @@ static void convert_rgb_to_rgba(const uint8_t *RGB, uint32_t width, uint32_t hei
     *RGBA = (uint8_t *)malloc(4 * dispWidth * dispHeight);
   }
   // printf("RGBA=%p\n", *RGBA);
-  for(uint32_t y = 0; y < height; ++y) {
+  for (uint32_t y = 0; y < height; ++y) {
     if (y > dispHeight) break;
-    for(uint32_t x = 0; x < width; ++x) {
+    for (uint32_t x = 0; x < width; ++x) {
       if (x > dispWidth) break;
       (*RGBA)[(y * dispWidth + x) * 4] = RGB[(y * width + x) * 3];
       (*RGBA)[(y * dispWidth + x) * 4 + 1] = RGB[(y * width + x) * 3 + 1];
