@@ -16,6 +16,8 @@
 #endif
 #elif defined(__linux__)
 #include <unistd.h>
+#elif defined(__APPLE__)
+#include <sys/sysctl.h>
 #endif
 
 #include "player.hpp"
@@ -31,8 +33,13 @@ namespace uvpx
         SYSTEM_INFO sysinfo;
         GetSystemInfo(&sysinfo);
         return std::max(1, (int)sysinfo.dwNumberOfProcessors);
-#elif defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux__)
         return std::max(1L, sysconf(_SC_NPROCESSORS_ONLN));
+#elif defined(__APPLE__)
+	uint32_t logicalcores = 0;
+	size_t size = sizeof( logicalcores );
+	sysctlbyname("hw.logicalcpu", &logicalcores, &size, NULL, 0);
+	return std::max(1L, (long)logicalcores);
 #endif
 
         return 1;
