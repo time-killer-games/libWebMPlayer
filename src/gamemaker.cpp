@@ -67,6 +67,7 @@ EXPORTED_FUNCTION double video_add(char *fname) {
 
 EXPORTED_FUNCTION double video_delete(double ind) {
   if (video_exists(ind)) {
+    audios[(int)ind]->destroy();
     delete videos[(int)ind];
     delete audios[(int)ind];
     videos[(int)ind] = nullptr;
