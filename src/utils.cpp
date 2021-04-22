@@ -37,7 +37,7 @@ namespace uvpx
         return std::max(1L, sysconf(_SC_NPROCESSORS_ONLN));
 #elif defined(__APPLE__)
 	uint32_t logicalcores = 0;
-	size_t size = sizeof( logicalcores );
+	size_t size = sizeof(logicalcores);
 	sysctlbyname("hw.logicalcpu", &logicalcores, &size, NULL, 0);
 	return std::max(1L, (long)logicalcores);
 #endif
