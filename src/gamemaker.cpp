@@ -137,10 +137,10 @@ EXPORTED_FUNCTION double video_get_property(double ind, double propertyId) {
     if (yuv) {
       double ret;
       switch ((int)propertyId) {
-        case WEBM_WIDTH:    ret = yuv->displayWidth();          break;
-        case WEBM_HEIGHT:   ret = yuv->displayHeight();         break;
+        case WEBM_WIDTH:    ret = yuv->displayWidth();               break;
+        case WEBM_HEIGHT:   ret = yuv->displayHeight();              break;
         case WEBM_DURATION: ret = videos[(int)ind]->info().duration; break;
-        default:            ret = -1.0;                         break;
+        default:            ret = -1.0;                              break;
       }
       videos[(int)ind]->unlockRead();
       return ret;
