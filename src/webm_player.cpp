@@ -6,8 +6,12 @@
 *  tree.
 */
 
+#if !defined(NOMINMAX)
 #define NOMINMAX
+#endif
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "webm_player.hpp"
 

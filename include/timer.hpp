@@ -3,9 +3,11 @@
 
 #include <atomic>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
+#if !defined(NOMINMAX)
 #define NOMINMAX
-#include <Windows.h>
+#endif
+#include <windows.h>
 #else
 #include <chrono>
 #endif
@@ -18,7 +20,7 @@ namespace uvpx
 
         std::atomic<bool> m_active;
 
-#ifdef _MSC_VER
+#ifdef _WIN32
         typedef LARGE_INTEGER TimePoint;
 #else
         typedef std::chrono::steady_clock::time_point TimePoint;

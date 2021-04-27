@@ -10,7 +10,9 @@
 #include <algorithm>
 
 #ifdef _WIN32
+#if !defined(NOMINMAX)
 #define NOMINMAX
+#endif
 #include <Windows.h>
 #elif defined(__linux__)
 #include <unistd.h>
