@@ -13,7 +13,7 @@
 #include <ratio>
 #include <cstring>
 
-#if _MSC_VER
+#if _WIN32
 #define NOMINMAX
 #include <Windows.h>
 #endif

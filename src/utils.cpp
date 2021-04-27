@@ -10,13 +10,11 @@
 #include <algorithm>
 
 #ifdef _WIN32
-#if _MSC_VER
 #define NOMINMAX
 #include <Windows.h>
-#endif
 #elif defined(__linux__)
 #include <unistd.h>
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__APPLE__)
 #include <sys/sysctl.h>
 #endif
 
@@ -29,13 +27,13 @@ namespace uvpx
     /// Returns number of CPU cores.
     int  getSystemThreadsCount()
     {
-#if _MSC_VER
+#ifdef _WIN32
         SYSTEM_INFO sysinfo;
         GetSystemInfo(&sysinfo);
         return std::max(1, (int)sysinfo.dwNumberOfProcessors);
 #elif defined(__linux__)
         return std::max(1L, sysconf(_SC_NPROCESSORS_ONLN));
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__APPLE__)
         uint32_t logicalcores = 0;
         size_t size = sizeof(logicalcores);
         sysctlbyname("hw.logicalcpu", &logicalcores, &size, NULL, 0);

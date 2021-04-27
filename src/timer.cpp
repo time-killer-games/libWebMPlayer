@@ -1,7 +1,7 @@
 #include "timer.hpp"
 #include "utils.hpp"
 
-#if _MSC_VER
+#if _WIN32
 #include <Windows.h>
 #endif
 
@@ -10,7 +10,7 @@
 
 namespace uvpx
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     LARGE_INTEGER s_timerFrequency;
 #endif
 
@@ -18,7 +18,7 @@ namespace uvpx
         m_active(false),
         m_pauseDuration(0.0)
     {
-#if _MSC_VER
+#if _WIN32
         QueryPerformanceFrequency(&s_timerFrequency);
 #endif
     }
@@ -66,7 +66,7 @@ namespace uvpx
 
     void Timer::now(TimePoint & tp)
     {
-#if _MSC_VER
+#if _WIN32
         QueryPerformanceCounter(&tp);
 #else
         tp = std::chrono::steady_clock::now();
@@ -75,7 +75,7 @@ namespace uvpx
 
     double Timer::secondsElapsed(const TimePoint& start, const TimePoint& end)
     {
-#if _MSC_VER
+#if _WIN32
         return (end.QuadPart - start.QuadPart) / (double)s_timerFrequency.QuadPart;
 #else
         return ((end - start).count()) * std::chrono::steady_clock::period::num / static_cast<double>(std::chrono::steady_clock::period::den);
