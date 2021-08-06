@@ -128,13 +128,7 @@ bool video_stop(int ind) {
   return video_is_stopped(ind);
 }
 
-const int WEBM_INVALID  = 0;
-const int WEBM_WIDTH    = 1;
-const int WEBM_HEIGHT   = 2;
-const int WEBM_PLAYTIME = 3;
-const int WEBM_DURATION = 4;
-
-EXPORTED_FUNCTION double video_get_property(int ind, int prop) {
+double video_get_property(int ind, int prop) {
   if (video_exists(ind)) {
     uvpx::Frame *yuv = nullptr;
     yuv = videos[ind]->lockRead();
