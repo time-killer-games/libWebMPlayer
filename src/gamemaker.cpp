@@ -128,7 +128,8 @@ EXPORTED_FUNCTION double video_stop(double ind) {
 const int WEBM_INVALID  = 0; // reserved.
 const int WEBM_WIDTH    = 1;
 const int WEBM_HEIGHT   = 2;
-const int WEBM_DURATION = 3;
+const int WEBM_PLAYTIME = 3;
+const int WEBM_DURATION = 4;
 
 EXPORTED_FUNCTION double video_get_property(double ind, double propertyId) {
   if (video_exists(ind)) {
@@ -139,6 +140,7 @@ EXPORTED_FUNCTION double video_get_property(double ind, double propertyId) {
       switch ((int)propertyId) {
         case WEBM_WIDTH:    ret = yuv->displayWidth();               break;
         case WEBM_HEIGHT:   ret = yuv->displayHeight();              break;
+        case WEBM_PLAYTIME: ret = videos[(int)ind]->info().playTime; break;
         case WEBM_DURATION: ret = videos[(int)ind]->info().duration; break;
         default:            ret = -1.0;                              break;
       }
@@ -159,6 +161,10 @@ EXPORTED_FUNCTION double video_get_width(double ind) {
 
 EXPORTED_FUNCTION double video_get_height(double ind) {
   return video_get_property(ind, WEBM_HEIGHT);
+}
+
+EXPORTED_FUNCTION double video_get_playtime(double ind) {
+  return video_get_property(ind, WEBM_PLAYTIME);
 }
 
 EXPORTED_FUNCTION double video_get_duration(double ind) {
