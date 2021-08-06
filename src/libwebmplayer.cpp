@@ -10,6 +10,7 @@
 #else
 #include "lodepng.h"
 #endif
+#include "libwebmplayer.h"
 #include "yuv_rgb.h"
 
 #ifdef _WIN32
