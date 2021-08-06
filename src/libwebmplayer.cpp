@@ -15,19 +15,18 @@
 #ifdef _WIN32
 #include <png.h>
 #include <windows.h>
-#define EXPORTED_FUNCTION extern "C" __declspec(dllexport)
-#else /* macOS, Linux, and BSD */
-#define EXPORTED_FUNCTION extern "C" __attribute__((visibility("default")))
 #endif
 
-static int id = -1;
-static std::unordered_map<int, uvpx::Player *> videos;
-static std::unordered_map<int, wp::WebmPlayer *> audios;
+namespace {
 
-static void convert_rgb_to_rgba(const uint8_t *RGB, uint32_t width, uint32_t height, uint8_t **RGBA, uint32_t dispWidth, uint32_t dispHeight) {
+int id = -1;
+std::unordered_map<int,   uvpx::Player *> videos;
+std::unordered_map<int, wp::WebmPlayer *> audios;
+
+void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned height, unsigned char **RGBA, unsigned dispWidth, unsigned dispHeight) {
   if ((*RGBA) == nullptr) {
     printf("RGBA buffer given is nullptr, allocating a new one.\n");
-    *RGBA = (uint8_t *)malloc(4 * dispWidth * dispHeight);
+    *RGBA = (unsigned char *)malloc(4 * dispWidth * dispHeight);
   }
   // printf("RGBA=%p\n", *RGBA);
   for (uint32_t y = 0; y < height; ++y) {
@@ -42,11 +41,15 @@ static void convert_rgb_to_rgba(const uint8_t *RGB, uint32_t width, uint32_t hei
   }
 }
 
-EXPORTED_FUNCTION double video_exists(double ind) {
+} // anonymous namespace
+
+namespace libwebmplayer {
+
+bool video_exists(int ind) {
   return (videos.find(ind) != videos.end());
 }
 
-EXPORTED_FUNCTION double video_add(char *fname) {
+int video_add(const char *fname) {
   uvpx::Player *video = new uvpx::Player(uvpx::Player::defaultConfig());
   uvpx::Player::LoadResult res = video->load(fname, 1, true);
   wp::WebmPlayer *audio = new wp::WebmPlayer; audio->load(fname);
@@ -65,13 +68,13 @@ EXPORTED_FUNCTION double video_add(char *fname) {
   return id;
 }
 
-EXPORTED_FUNCTION double video_delete(double ind) {
+bool video_delete(int ind) {
   if (video_exists(ind)) {
-    audios[(int)ind]->destroy();
-    delete videos[(int)ind];
-    delete audios[(int)ind];
-    videos[(int)ind] = nullptr;
-    audios[(int)ind] = nullptr;
+    audios[ind]->destroy();
+    delete videos[ind];
+    delete audios[ind];
+    videos[ind] = nullptr;
+    audios[ind] = nullptr;
     videos.erase(ind);
     audios.erase(ind);
     return true;
@@ -79,103 +82,98 @@ EXPORTED_FUNCTION double video_delete(double ind) {
   return false;
 }
 
-EXPORTED_FUNCTION double video_is_playing(double ind) {
+bool video_is_playing(int ind) {
   if (video_exists(ind)) {
-    return videos[(int)ind]->isPlaying();
+    return videos[ind]->isPlaying();
   }
   return false;
 }
 
-EXPORTED_FUNCTION double video_play(double ind) {
+bool video_play(int ind) {
   if (video_exists(ind)) {
-    videos[(int)ind]->play();
-    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Play);
+    videos[ind]->play();
+    audios[ind]->playback(wp::WebmPlayer::PlaybackCommand::Play);
   }
   return video_is_playing(ind);
 }
 
-EXPORTED_FUNCTION double video_is_paused(double ind) {
+bool video_is_paused(int ind) {
   if (video_exists(ind)) {
-    return videos[(int)ind]->isPaused();
+    return videos[ind]->isPaused();
   }
   return false;
 }
 
-EXPORTED_FUNCTION double video_pause(double ind) {
+bool video_pause(int ind) {
   if (video_exists(ind)) {
-    videos[(int)ind]->pause();
-    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Pause);
+    videos[ind]->pause();
+    audios[ind]->playback(wp::WebmPlayer::PlaybackCommand::Pause);
   }
   return video_is_paused(ind);
 }
 
-EXPORTED_FUNCTION double video_is_stopped(double ind) {
+bool video_is_stopped(int ind) {
   if (video_exists(ind)) {
-    return videos[(int)ind]->isStopped();
+    return videos[ind]->isStopped();
   }
   return false;
 }
 
-EXPORTED_FUNCTION double video_stop(double ind) {
+bool video_stop(int ind) {
   if (video_exists(ind)) {
-    videos[(int)ind]->stop();
-    audios[(int)ind]->playback(wp::WebmPlayer::PlaybackCommand::Stop);
+    videos[ind]->stop();
+    audios[ind]->playback(wp::WebmPlayer::PlaybackCommand::Stop);
   }
   return video_is_stopped(ind);
 }
 
-// Also mirror this into the extension constants:
-const int WEBM_INVALID  = 0; // reserved.
+const int WEBM_INVALID  = 0;
 const int WEBM_WIDTH    = 1;
 const int WEBM_HEIGHT   = 2;
 const int WEBM_PLAYTIME = 3;
 const int WEBM_DURATION = 4;
 
-EXPORTED_FUNCTION double video_get_property(double ind, double propertyId) {
+EXPORTED_FUNCTION double video_get_property(int ind, int prop) {
   if (video_exists(ind)) {
     uvpx::Frame *yuv = nullptr;
-    yuv = videos[(int)ind]->lockRead();
+    yuv = videos[ind]->lockRead();
     if (yuv) {
       double ret;
-      switch ((int)propertyId) {
-        case WEBM_WIDTH:    ret = yuv->displayWidth();               break;
-        case WEBM_HEIGHT:   ret = yuv->displayHeight();              break;
-        case WEBM_PLAYTIME: ret = videos[(int)ind]->info().playTime; break;
-        case WEBM_DURATION: ret = videos[(int)ind]->info().duration; break;
-        default:            ret = -1.0;                              break;
+      switch (prop) {
+        case WEBM_WIDTH:    ret = yuv->displayWidth();          break;
+        case WEBM_HEIGHT:   ret = yuv->displayHeight();         break;
+        case WEBM_PLAYTIME: ret = videos[ind]->info().playTime; break;
+        case WEBM_DURATION: ret = videos[ind]->info().duration; break;
+        default:            ret = 0;                            break;
       }
-      videos[(int)ind]->unlockRead();
+      videos[ind]->unlockRead();
       return ret;
     }
-    return -2.0;
   }
-  return -3.0;
-  // -1 - unknown property
-  // -2 - unable to lock yuv video
-  // -3 - video does not exist.
+  return 0;
 }
 
-EXPORTED_FUNCTION double video_get_width(double ind) {
+int video_get_width(int ind) {
   return video_get_property(ind, WEBM_WIDTH);
 }
 
-EXPORTED_FUNCTION double video_get_height(double ind) {
+int video_get_height(int ind) {
   return video_get_property(ind, WEBM_HEIGHT);
 }
 
-EXPORTED_FUNCTION double video_get_playtime(double ind) {
+double video_get_playtime(int ind) {
   return video_get_property(ind, WEBM_PLAYTIME);
 }
 
-EXPORTED_FUNCTION double video_get_duration(double ind) {
+double video_get_duration(int ind) {
   return video_get_property(ind, WEBM_DURATION);
 }
 
-EXPORTED_FUNCTION double video_grab_frame_image(double ind, char *fname) {
+bool video_grab_frame_image(int ind, const char *fname) {
   if (video_exists(ind)) {
-    videos[(int)ind]->update(0);
+    videos[ind]->update(0);
     uvpx::Frame *yuv = nullptr;
-    yuv = videos[(int)ind]->lockRead();
+    yuv = videos[ind]->lockRead();
     if (yuv) {
       unsigned char *rgb = (unsigned char *)malloc(3 * yuv->width() * yuv->height());
       yuv420_rgb24_std(yuv->width(), yuv->height(), yuv->y(), yuv->u(), yuv->v(), 
@@ -184,7 +182,7 @@ EXPORTED_FUNCTION double video_grab_frame_image(double ind, char *fname) {
         unsigned char *rgba = nullptr;
         convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
         free(rgb);
-        videos[(int)ind]->unlockRead();
+        videos[ind]->unlockRead();
         if (rgba) {
           #if defined(_WIN32)
           std::wstring wstr = widen(fname);
@@ -193,36 +191,33 @@ EXPORTED_FUNCTION double video_grab_frame_image(double ind, char *fname) {
           lodepng_encode32_file(fname, rgba, yuv->displayWidth(), yuv->displayHeight());
           #endif
           free(rgba);
-          return 1.0;
+          return true;
         }
-        return 0.0;
       }
-      return -1.0;
     }
-    return -2.0;
   }
-  return -3.0;
+  return false;
 }
 
-EXPORTED_FUNCTION double video_grab_frame_buffer(double ind, char *buffer) {
+bool video_grab_frame_buffer(int ind, unsigned char *buffer) {
   if (video_exists(ind)) {
-    videos[(int)ind]->update(0);
+    videos[ind]->update(0);
     uvpx::Frame *yuv = nullptr;
-    yuv = videos[(int)ind]->lockRead();
+    yuv = videos[ind]->lockRead();
     if (yuv) {
       unsigned char *rgb = (unsigned char *)malloc(3 * yuv->width() * yuv->height());
       yuv420_rgb24_std(yuv->width(), yuv->height(), yuv->y(), yuv->u(), yuv->v(), 
       yuv->yPitch(), yuv->uvPitch(), rgb, yuv->width() * 3, YCBCR_JPEG);
       if (rgb) {
-        unsigned char *rgba = (unsigned char *)buffer;
+        unsigned char *rgba = buffer;
         convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
         free(rgb);
-        videos[(int)ind]->unlockRead();
-        return 1.0;
+        videos[ind]->unlockRead();
+        return true;
       }
-      return -1.0;
     }
-    return -2.0;
   }
-  return -3.0;
+  return false;
 }
+
+} // namespace libwebmplayer
