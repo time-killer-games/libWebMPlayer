@@ -16,7 +16,7 @@
 #include <Windows.h>
 #elif defined(__linux__)
 #include <unistd.h>
-#elif defined(__FreeBSD__) || defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly___)
 #include <sys/sysctl.h>
 #endif
 
@@ -35,10 +35,10 @@ namespace uvpx
         return std::max(1, (int)sysinfo.dwNumberOfProcessors);
 #elif defined(__linux__)
         return std::max(1L, sysconf(_SC_NPROCESSORS_ONLN));
-#elif defined(__FreeBSD__) || defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly___)
         uint32_t logicalcores = 0;
         size_t size = sizeof(logicalcores);
-        sysctlbyname("hw.logicalcpu", &logicalcores, &size, NULL, 0);
+        sysctlbyname("hw.logicalcpu", &logicalcores, &size, nullptr, 0);
         return std::max(1L, (long)logicalcores);
 #endif
 
