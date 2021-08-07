@@ -67,5 +67,5 @@ EXPORTED_FUNCTION double video_grab_frame_image(double ind, char *fname) {
 }
 
 EXPORTED_FUNCTION double video_grab_frame_buffer(double ind, char *buffer) {
-  return libwebmplayer::video_grab_frame_buffer((int)ind, (unsigned char *buffer));
+  return libwebmplayer::video_grab_frame_buffer((int)ind, (unsigned char *)buffer);
 }

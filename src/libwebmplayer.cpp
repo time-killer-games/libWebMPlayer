@@ -137,7 +137,7 @@ double video_get_property(int ind, int prop) {
       switch (prop) {
         case WEBM_WIDTH:    ret = yuv->displayWidth();          break;
         case WEBM_HEIGHT:   ret = yuv->displayHeight();         break;
-        case WEBM_PLAYTIME: ret = videos[ind]->info().playTime; break;
+        case WEBM_PLAYTIME: ret = videos[ind]->playTime();      break;
         case WEBM_DURATION: ret = videos[ind]->info().duration; break;
         default:            ret = 0;                            break;
       }
