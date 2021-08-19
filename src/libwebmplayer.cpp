@@ -4,19 +4,9 @@
 
 #include "player.hpp"
 #include "webm_player.hpp"
-#ifdef _WIN32
-#include "libpng-util.h"
-#include "widen_narrow.h"
-#else
-#include "lodepng.h"
-#endif
+#include "libpng-util/libpng-util.h"
 #include "libwebmplayer.h"
 #include "yuv_rgb.h"
-
-#ifdef _WIN32
-#include <png.h>
-#include <windows.h>
-#endif
 
 namespace {
 
@@ -24,7 +14,7 @@ int id = -1;
 std::unordered_map<int,   uvpx::Player *> videos;
 std::unordered_map<int, wp::WebmPlayer *> audios;
 
-void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned height, unsigned char **RGBA, unsigned dispWidth, unsigned dispHeight) {
+void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned height, unsigned char **RGBA, unsigned dispWidth, unsigned dispHeight, bool reverse = true) {
   if ((*RGBA) == nullptr) {
     printf("RGBA buffer given is nullptr, allocating a new one.\n");
     *RGBA = (unsigned char *)malloc(4 * dispWidth * dispHeight);
@@ -34,9 +24,9 @@ void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned heig
     if (y > dispHeight) break;
     for (uint32_t x = 0; x < width; ++x) {
       if (x > dispWidth) break;
-      (*RGBA)[(y * dispWidth + x) * 4] = RGB[(y * width + x) * 3];
+      (*RGBA)[(y * dispWidth + x) * 4] = RGB[(y * width + x) * 3 + (reverse) ? 2 : 0];
       (*RGBA)[(y * dispWidth + x) * 4 + 1] = RGB[(y * width + x) * 3 + 1];
-      (*RGBA)[(y * dispWidth + x) * 4 + 2] = RGB[(y * width + x) * 3 + 2];
+      (*RGBA)[(y * dispWidth + x) * 4 + 2] = RGB[(y * width + x) * 3 + (!reverse) ? 2 : 0];
       (*RGBA)[(y * dispWidth + x) * 4 + 3] = 255;
     }
   }
@@ -44,21 +34,21 @@ void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned heig
 
 } // anonymous namespace
 
-namespace libwebmplayer {
+namespace enigma_user {
 
 bool video_exists(int ind) {
   return (videos.find(ind) != videos.end());
 }
 
-int video_add(const char *fname) {
+int video_add(std::string fname) {
   uvpx::Player *video = new uvpx::Player(uvpx::Player::defaultConfig());
-  uvpx::Player::LoadResult res = video->load(fname, 1, true);
-  wp::WebmPlayer *audio = new wp::WebmPlayer; audio->load(fname);
+  uvpx::Player::LoadResult res = video->load(fname.c_str(), 1, true);
+  wp::WebmPlayer *audio = new wp::WebmPlayer; audio->load(fname.c_str());
   id++; videos.insert(std::make_pair(id, video));
   audios.insert(std::make_pair(id, audio));
   switch (res) {
    case uvpx::Player::LoadResult::FileNotExists:
-    printf("Failed to open video file '%s'\n", fname);
+    printf("Failed to open video file '%s'\n", fname.c_str());
    case uvpx::Player::LoadResult::UnsupportedVideoCodec:
     printf("Unsupported video codec\n");
    case uvpx::Player::LoadResult::NotInitialized:
@@ -164,7 +154,7 @@ double video_get_duration(int ind) {
   return video_get_property(ind, WEBM_DURATION);
 }
 
-bool video_grab_frame_image(int ind, const char *fname) {
+bool video_grab_frame_image(int ind, std::string fname) {
   if (video_exists(ind)) {
     videos[ind]->update(0);
     uvpx::Frame *yuv = nullptr;
@@ -175,16 +165,11 @@ bool video_grab_frame_image(int ind, const char *fname) {
       yuv->yPitch(), yuv->uvPitch(), rgb, yuv->width() * 3, YCBCR_JPEG);
       if (rgb) {
         unsigned char *rgba = nullptr;
-        convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
+        convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight(), false);
         free(rgb);
         videos[ind]->unlockRead();
         if (rgba) {
-          #if defined(_WIN32)
-          std::wstring wstr = widen(fname);
-          libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), wstr.c_str());
-          #else
-          lodepng_encode32_file(fname, rgba, yuv->displayWidth(), yuv->displayHeight());
-          #endif
+          libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), fname.c_str());
           free(rgba);
           return true;
         }
@@ -194,7 +179,7 @@ bool video_grab_frame_image(int ind, const char *fname) {
   return false;
 }
 
-bool video_grab_frame_buffer(int ind, unsigned char *buffer) {
+bool video_grab_frame_buffer(int ind, void *buffer) {
   if (video_exists(ind)) {
     videos[ind]->update(0);
     uvpx::Frame *yuv = nullptr;
@@ -204,7 +189,7 @@ bool video_grab_frame_buffer(int ind, unsigned char *buffer) {
       yuv420_rgb24_std(yuv->width(), yuv->height(), yuv->y(), yuv->u(), yuv->v(), 
       yuv->yPitch(), yuv->uvPitch(), rgb, yuv->width() * 3, YCBCR_JPEG);
       if (rgb) {
-        unsigned char *rgba = buffer;
+        unsigned char *rgba = (unsigned char *)buffer;
         convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
         free(rgb);
         videos[ind]->unlockRead();
@@ -215,4 +200,4 @@ bool video_grab_frame_buffer(int ind, unsigned char *buffer) {
   return false;
 }
 
-} // namespace libwebmplayer
+} // namespace enigma_user
