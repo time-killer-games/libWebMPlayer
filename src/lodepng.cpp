@@ -23,12 +23,18 @@ freely, subject to the following restrictions:
     distribution.
 */
 
+/* THIS VERSION OF LODEPNG HAS BEEN MODIFIED AND IS NOT THE ORIGINAL FILE */
+
 /*
 The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
 #include "lodepng.h"
+
+#if defined(_WIN32)
+#include "widenarrow.h"
+#endif
 
 #ifdef LODEPNG_COMPILE_DISK
 #include <limits.h> /* LONG_MAX */
@@ -380,7 +386,12 @@ static void lodepng_set32bitInt(unsigned char* buffer, unsigned value) {
 static long lodepng_filesize(const char* filename) {
   FILE* file;
   long size;
+  #if defined(_WIN32)
+  std::wstring wfilename = widen(filename);
+  if (_wfopen_s(&file, wfilename.c_str(), L"rb")) return -1;
+  #else
   file = fopen(filename, "rb");
+  #endif
   if(!file) return -1;
 
   if(fseek(file, 0, SEEK_END) != 0) {
@@ -400,7 +411,12 @@ static long lodepng_filesize(const char* filename) {
 static unsigned lodepng_buffer_file(unsigned char* out, size_t size, const char* filename) {
   FILE* file;
   size_t readsize;
+  #if defined(_WIN32)
+  std::wstring wfilename = widen(filename);
+  if (_wfopen_s(&file, wfilename.c_str(), L"rb")) return 78;
+  #else
   file = fopen(filename, "rb");
+  #endif
   if(!file) return 78;
 
   readsize = fread(out, 1, size, file);
@@ -424,7 +440,12 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
 /*write given buffer to the file, overwriting the file, it doesn't append to it.*/
 unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const char* filename) {
   FILE* file;
-  file = fopen(filename, "wb" );
+  #if defined(_WIN32)
+  std::wstring wfilename = widen(filename);
+  if (_wfopen_s(&file, wfilename.c_str(), L"wb")) return 79;
+  #else
+  file = fopen(filename, "wb");
+  #endif
   if(!file) return 79;
   fwrite(buffer, 1, buffersize, file);
   fclose(file);

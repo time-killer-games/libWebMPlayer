@@ -2,7 +2,7 @@
 #include "utils.hpp"
 
 #ifdef _WIN32
-#include "widen_narrow.h"
+#include "widenarrow.h"
 #include <clocale>
 #endif
 

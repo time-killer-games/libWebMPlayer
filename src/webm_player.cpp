@@ -86,7 +86,7 @@ namespace wp
 
     bool WebmPlayer::initSDL()
     {
-        if (SDL_Init(SDL_INIT_AUDIO) != 0)
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
         {
             return false;
         }
@@ -104,8 +104,6 @@ namespace wp
             SDL_CloseAudioDevice(m_audioDevice);
             m_audioDevice = 0;
         }
-
-        SDL_Quit();
     }
 
     bool WebmPlayer::initAudio()

@@ -4,17 +4,11 @@
 
 #include "player.hpp"
 #include "webm_player.hpp"
-#ifdef _WIN32
-#include "libpng-util.h"
-#include "widen_narrow.h"
-#else
 #include "lodepng.h"
-#endif
 #include "libwebmplayer.h"
 #include "yuv_rgb.h"
 
-#ifdef _WIN32
-#include <png.h>
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 
@@ -26,17 +20,31 @@ std::unordered_map<int, wp::WebmPlayer *> audios;
 
 void convert_rgb_to_rgba(const unsigned char *RGB, unsigned width, unsigned height, unsigned char **RGBA, unsigned dispWidth, unsigned dispHeight) {
   if ((*RGBA) == nullptr) {
-    printf("RGBA buffer given is nullptr, allocating a new one.\n");
     *RGBA = (unsigned char *)malloc(4 * dispWidth * dispHeight);
   }
-  // printf("RGBA=%p\n", *RGBA);
   for (uint32_t y = 0; y < height; ++y) {
     if (y > dispHeight) break;
     for (uint32_t x = 0; x < width; ++x) {
       if (x > dispWidth) break;
-      (*RGBA)[(y * dispWidth + x) * 4] = RGB[(y * width + x) * 3];
+      (*RGBA)[(y * dispWidth + x) * 4 + 0] = RGB[(y * width + x) * 3 + 0];
       (*RGBA)[(y * dispWidth + x) * 4 + 1] = RGB[(y * width + x) * 3 + 1];
       (*RGBA)[(y * dispWidth + x) * 4 + 2] = RGB[(y * width + x) * 3 + 2];
+      (*RGBA)[(y * dispWidth + x) * 4 + 3] = 255;
+    }
+  }
+}
+
+void convert_rgb_to_bgra(const unsigned char *RGB, unsigned width, unsigned height, unsigned char **RGBA, unsigned dispWidth, unsigned dispHeight) {
+  if ((*RGBA) == nullptr) {
+    *RGBA = (unsigned char *)malloc(4 * dispWidth * dispHeight);
+  }
+  for (uint32_t y = 0; y < height; ++y) {
+    if (y > dispHeight) break;
+    for (uint32_t x = 0; x < width; ++x) {
+      if (x > dispWidth) break;
+      (*RGBA)[(y * dispWidth + x) * 4 + 0] = RGB[(y * width + x) * 3 + 2];
+      (*RGBA)[(y * dispWidth + x) * 4 + 1] = RGB[(y * width + x) * 3 + 1];
+      (*RGBA)[(y * dispWidth + x) * 4 + 2] = RGB[(y * width + x) * 3 + 0];
       (*RGBA)[(y * dispWidth + x) * 4 + 3] = 255;
     }
   }
@@ -56,16 +64,6 @@ int video_add(const char *fname) {
   wp::WebmPlayer *audio = new wp::WebmPlayer; audio->load(fname);
   id++; videos.insert(std::make_pair(id, video));
   audios.insert(std::make_pair(id, audio));
-  switch (res) {
-   case uvpx::Player::LoadResult::FileNotExists:
-    printf("Failed to open video file '%s'\n", fname);
-   case uvpx::Player::LoadResult::UnsupportedVideoCodec:
-    printf("Unsupported video codec\n");
-   case uvpx::Player::LoadResult::NotInitialized:
-    printf("Video player not initialized\n");
-   case uvpx::Player::LoadResult::Success:
-    printf("Video loaded successfully\n");
-  }
   return id;
 }
 
@@ -179,12 +177,7 @@ bool video_grab_frame_image(int ind, const char *fname) {
         free(rgb);
         videos[ind]->unlockRead();
         if (rgba) {
-          #if defined(_WIN32)
-          std::wstring wstr = widen(fname);
-          libpng_encode32_file(rgba, yuv->displayWidth(), yuv->displayHeight(), wstr.c_str());
-          #else
           lodepng_encode32_file(fname, rgba, yuv->displayWidth(), yuv->displayHeight());
-          #endif
           free(rgba);
           return true;
         }
@@ -205,7 +198,11 @@ bool video_grab_frame_buffer(int ind, unsigned char *buffer) {
       yuv->yPitch(), yuv->uvPitch(), rgb, yuv->width() * 3, YCBCR_JPEG);
       if (rgb) {
         unsigned char *rgba = buffer;
+        #if defined(USE_BGRA_COLOR)
+        convert_rgb_to_bgra(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
+        #else
         convert_rgb_to_rgba(rgb, yuv->width(), yuv->height(), &rgba, yuv->displayWidth(), yuv->displayHeight());
+        #endif
         free(rgb);
         videos[ind]->unlockRead();
         return true;
